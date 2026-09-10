@@ -1,0 +1,7 @@
+---
+title: "Notities Module 2 deel 1"
+subtitle: "Sampling and sample size estimation"
+format: html
+---
+
+
