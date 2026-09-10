@@ -32,6 +32,8 @@ editor_options:
 # Oefeningen
 
 ```{r}
+set.seed(123)
+
 # Packages
 library(tidyverse)
 ```
