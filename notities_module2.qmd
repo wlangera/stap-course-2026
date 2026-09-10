@@ -1,7 +1,142 @@
 ---
-title: "Notities Module 2 deel 1"
+title: "Module 2 deel 1"
 subtitle: "Sampling and sample size estimation"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
+# Notities
+## Introduction
 
+- correct sampling is belangrijk voor kosten, robuuste schattingen etc.
+- representatieve steekproef nemen!
+
+## Simple random sampling
+
+- eenvoudige formules
+- je moet op voorhand wel populatie goed afbakenen
+
+## Unequal probability sampling
+
+- schaling door inclusieprobabiliteiten
+
+## Stratified random sampling
+
+- met strata
+- schaling door gewichten
+- je kan oversamplen als je een uitspraak per stratum wilt doen maar dan wordt het wel complex voor de analyses
+
+- wat als je achteraf beseft dat je strata hebt? --> poststratification
+
+# Oefeningen
+
+```{r}
+# Packages
+library(tidyverse)
+```
+
+## Oefening 1
+
+We hebben twee datasets.
+
+```{r}
+broilers_data <- read_csv("data/broilers.csv")
+glimpse(broilers_data)
+```
+
+```{r}
+broilers_sample <- read_csv("data/broilers_sample.csv")
+glimpse(broilers_sample)
+```
+
+We willen het gemiddelde met confidence interval.
+
+```{r}
+mean_weight <- mean(broilers_sample$weight)
+se <- sqrt(var(broilers_sample$weight) / length(broilers_sample$weight))
+ll <- mean_weight + (qnorm(0.025) * se)
+ul <- mean_weight + (qnorm(0.975) * se)
+
+paste0(
+  "We hebben een gemiddelde van ",
+  round(mean_weight, 1),
+  " gram (95 % CI: ", round(ll, 1), "-",
+  round(ul, 1), ")"
+)
+```
+
+We testen samples van 10, 20, 50, 100, 1000 and the entire population of broilers.
+
+```{r}
+samples <- c(10, 20, 50, 100, 200, 300, 500, 1000)
+out <- vector(mode = "list", length = length(samples))
+
+broilers_data_1 <- broilers_data %>%
+  filter(barn == 1)
+
+for (i in seq_along(samples)) {
+  s <- samples[i]
+  # Take random sample from barn 1
+  sample_rows <- seq_len(nrow(broilers_data_1))
+  sample_boiler <- sample(
+    sample_rows, 
+    size = s
+  )
+  sample_data <- broilers_data_1[sample_boiler, ]
+  
+  # Calculate values
+  mean_weight <- mean(sample_data$weight)
+  se <- sqrt(var(sample_data$weight) / length(sample_data$weight))
+  ll <- mean_weight + (qnorm(0.025) * se)
+  ul <- mean_weight + (qnorm(0.975) * se)
+  
+  out[[i]] <- list(
+    samples = s,
+    mean = mean_weight,
+    se = se,
+    ll = ll,
+    ul = ul,
+    replace = "no replacement"
+  )
+}
+
+# With replacement
+out2 <- vector(mode = "list", length = length(samples))
+
+for (i in seq_along(samples)) {
+  s <- samples[i]
+  # Take random sample from barn 1
+  sample_rows <- seq_len(nrow(broilers_data_1))
+  sample_boiler <- sample(
+    sample_rows, 
+    size = s,
+    replace = TRUE
+  )
+  sample_data <- broilers_data_1[sample_boiler, ]
+  
+  # Calculate values
+  mean_weight <- mean(sample_data$weight)
+  se <- sqrt(var(sample_data$weight) / length(sample_data$weight))
+  ll <- mean_weight + (qnorm(0.025) * se)
+  ul <- mean_weight + (qnorm(0.975) * se)
+  
+  out2[[i]] <- list(
+    samples = s,
+    mean = mean_weight,
+    se = se,
+    ll = ll,
+    ul = ul,
+    replace = "replacement"
+  )
+}
+
+bind_rows(out, out2) %>%
+  ggplot(aes(x = samples, y = mean)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = ll, ymax = ul)) +
+  facet_wrap(~replace)
+```
+
+Met replacement verwacht je minder variabiliteit te hebben.
+We zien dat niet echt.
