@@ -140,3 +140,35 @@ bind_rows(out, out2) %>%
 
 Met replacement verwacht je minder variabiliteit te hebben.
 We zien dat niet echt.
+
+## Oefening 2
+
+```{r}
+boot_samples <- 10000
+
+bootstrap_distribution <- replicate(boot_samples, {
+  # Select samples
+  n_samples <- nrow(broilers_sample)
+  sample_boiler <- sample(
+    seq_len(n_samples), 
+    size = n_samples,
+    replace = TRUE
+  )
+  
+  # Sample data
+  sample_data <- broilers_sample[sample_boiler, ]
+  
+  # Calculate mean
+  mean(sample_data$weight)
+})
+
+hist(bootstrap_distribution)
+
+paste0(
+  "We hebben een gemiddelde van ",
+  round(mean(bootstrap_distribution), 1),
+  " gram (95 % perc. bootstrap CI: ",
+  round(quantile(bootstrap_distribution, 0.025), 1), "-",
+  round(quantile(bootstrap_distribution, 0.975), 1), ")"
+)
+```
